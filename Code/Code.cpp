@@ -14,6 +14,7 @@
 const char* channelIDStr_write = "2422785";
 const char* apiKey_write = "YTO69PC9LIR852AU";
 
+#include <Arduino.h>
 #include <OneWire.h>
 #include <DallasTemperature.h>
 #include <WiFi.h>
