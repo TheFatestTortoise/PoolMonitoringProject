@@ -149,7 +149,7 @@ void setup() {
 //    WiFi.begin(ssid, password);
 //    Serial.println("Connecting through hardcoded wifi");
 //    Serial.println(ssid);
-//    Serial.println(password);
+//    Serial.println(password);   // Obsolete hardcoded wifi section
 //    errorFlash();
 //    wifiDelay();
 //  }
@@ -159,20 +159,9 @@ void setup() {
 
 void loop() {
   // Check if the button is pressed to initiate BLE communication
-  if (digitalRead(BUTTON_PIN) == HIGH) {
-
+  
     bluetooth(); // stuck it in its own thing at the bottom
-
-    Serial.println("New Credentials Received!");
-    Serial.println(newCred);
-    EEPROM.writeString(0, newCred);
-    EEPROM.commit();
-
-    blue(); delay(150); off(); delay(100); blue(); delay(150); off(); delay(100);
-    blue(); delay(150); off(); delay(100);
-
-    ESP.restart();
-  }
+  
 
   else {
     unsigned long currentMillis = millis();
@@ -340,6 +329,7 @@ void wifiDelay() {
 }
 
 void bluetooth() {
+  if (digitalRead(BUTTON_PIN) == HIGH) {
 
   bluetoothflash();
 
@@ -377,4 +367,16 @@ void bluetooth() {
       waiting = false;
     }
   }
+
+  
+    Serial.println("New Credentials Received!");
+    Serial.println(newCred);
+    EEPROM.writeString(0, newCred);
+    EEPROM.commit();
+
+    blue(); delay(150); off(); delay(100); blue(); delay(150); off(); delay(100);
+    blue(); delay(150); off(); delay(100);
+
+    ESP.restart();
+}
 }
