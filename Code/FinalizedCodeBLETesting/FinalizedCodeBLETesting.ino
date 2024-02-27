@@ -4,6 +4,7 @@
 //// - Remove hardcoded credentials entirely, they'll just waste time outside testing
 // - Maybe add more comments but eh, it'll be fine
 // - Change timings on temperature measurement and thingspeak upload intervals
+// - Make sure bluetooth ID is different for each
 
 // Things to change before you upload
 // - Pin designations possibly
@@ -28,10 +29,9 @@ const char* apiKey_write = "YTO69PC9LIR852AU";
 #define EEPROM_SIZE 40
 #define BUTTON_PIN 13
 #define SENSOR_PIN 23
-#define RED_LED 25
-#define GREEN_LED 26
-#define BLUE_LED 27
-
+#define RED_LED 32
+#define GREEN_LED 33
+#define BLUE_LED 14
 // Init temp sensing modules
 OneWire oneWire(SENSOR_PIN);
 DallasTemperature DS18B20(&oneWire);
@@ -59,18 +59,22 @@ NimBLEServer* pServer = NULL;
 NimBLECharacteristic* pCharacteristic = NULL;
 bool bleConnected = false;
 
-// Init misc vars
-float tempF;
-bool button_pressed;
-bool waiting = false;
+// Init timing vars
 const long intervalUpload = 60000;
 unsigned long previousMillisUpload = -intervalUpload;
 const long intervalTempRead = 45000;
 unsigned long previousTempRead = -intervalTempRead;
+
+// Init credential sorting vars
 String newCred;
 String temp;
 String strs[5];
 int StringCount = 0;
+
+// Init misc vars
+float tempF;
+bool button_pressed;
+bool waiting = false;
 
 // Callbacks for BLE server events
 class MyServerCallbacks : public BLEServerCallbacks {
@@ -137,84 +141,97 @@ void setup() {
   Serial.println(strs[0]);
   Serial.print("Password = ");
   Serial.println(strs[1]);
-  
+
   WiFi.begin(strs[0], strs[1]);
   wifiDelay();
 
   if (WiFi.status() == WL_CONNECTED) {
     Serial.println("Connected to WiFi");
     green();
-  } 
-//  else {
-//    WiFi.begin(ssid, password);
-//    Serial.println("Connecting through hardcoded wifi");
-//    Serial.println(ssid);
-//    Serial.println(password);   // Obsolete hardcoded wifi section
-//    errorFlash();
-//    wifiDelay();
-//  }
+  }
+  //  else {
+  //    WiFi.begin(ssid, password);
+  //    Serial.println("Connecting through hardcoded wifi");
+  //    Serial.println(ssid);
+  //    Serial.println(password);   // Obsolete hardcoded wifi section
+  //    errorFlash();
+  //    wifiDelay();
+  //  }
 
   ThingSpeak.begin(client);
 }
 
 void loop() {
+
   // Check if the button is pressed to initiate BLE communication
-  
-    bluetooth(); // stuck it in its own thing at the bottom
-  
+  bluetooth(); // stuck it in its own thing at the bottom
 
-  else {
-    unsigned long currentMillis = millis();
-    // Read temperature and send data to Thingspeak
+  unsigned long currentMillis = millis();
+  // Read temperature and send data to Thingspeak
 
-    if ((currentMillis - previousTempRead) >= intervalTempRead) {
-      DS18B20.requestTemperatures();
-      tempF = ((DS18B20.getTempCByIndex(0)) * 1.8) + 32;
-      Serial.println(tempF);
-      previousTempRead = currentMillis;
-    }
+  if ((currentMillis - previousTempRead) >= intervalTempRead) {
+    DS18B20.requestTemperatures();
+    tempF = ((DS18B20.getTempCByIndex(0)) * 1.8) + 32;
+    Serial.println(tempF);
+    previousTempRead = currentMillis;
+  }
 
-    if (WiFi.status() == WL_CONNECTED) {
-      if (tempF != -196.60001) {
+  if (WiFi.status() == WL_CONNECTED) {
+    if (tempF != -196.60001) {
 
-        if (currentMillis - previousMillisUpload >= intervalUpload) {
-          ThingSpeak.setField(1, tempF);
-          previousMillisUpload = currentMillis;
-          delay(5000);
-        }
+      if (currentMillis - previousMillisUpload >= intervalUpload) {
+        ThingSpeak.setField(1, tempF);
+        previousMillisUpload = currentMillis;
+        delay(2500);
+        bluetooth();
+        delay(2500);
+      }
 
-        int response = ThingSpeak.writeFields(channelID_write, apiKey_write);
-        if (response == 200) {
-          Serial.println("Data sent to ThingSpeak successfully.");
-          cyan();
-          delay(5000);
-        }
-        else if (currentMillis - previousMillisUpload < intervalUpload) {
-          Serial.println("Waiting for next upload");
-          yellow();
-          delay(5000);
-        }
-        else {
-          Serial.println("Error sending data to ThingSpeak. HTTP error code: " + String(response));
-          red();
-          delay(5000);
-        }
+      int response = ThingSpeak.writeFields(channelID_write, apiKey_write);
+      if (response == 200) {
+        Serial.println("Data sent to ThingSpeak successfully.");
+        cyan();
+        delay(2500);
+        bluetooth();
+        delay(2500);
+      }
+      else if (currentMillis - previousMillisUpload < intervalUpload) {
+        Serial.println("Waiting for next upload");
+        yellow();
+        delay(2500);
+        bluetooth();
+        delay(2500);
       }
       else {
-        Serial.println("Temp read error (-196.60001)");
+        Serial.println("Error sending data to ThingSpeak. HTTP error code: " + String(response));
+        red();
+        delay(2500);
+        bluetooth();
+        delay(2500);
       }
-
-      // Code for reading password updates from Thingspeak (commented out)
-      // newCred = ThingSpeak.readFloatField(channelID_read, 1, apiKey_read);
-      // if (newCred != password){
-      //   EEPROM.writeString(0, newCred);
-      //   EEPROM.commit();
-      // }
     }
     else {
-      errorFlash();
-      ESP.restart();
+      Serial.println("Temp read error (-196.60001)");
     }
+
+    // The way this section is written now completely overrides the bluetooth creds.
+    // Code for reading password updates from Thingspeak (commented out)
+    // newCred = ThingSpeak.readFloatField(channelID_read, 1, apiKey_read);
+    // if (newCred != creds){
+    //      Serial.println("New Credentials Received!");
+    //      Serial.println(newCred);
+    //      EEPROM.writeString(0, newCred);
+    //      EEPROM.commit();
+    //
+    //      cyan(); delay(150); off(); delay(100); cyan(); delay(150); off(); delay(100);
+    //      cyan(); delay(150); off(); delay(100);
+    //
+    //      ESP.restart();
+    // }
+  }
+  else {
+    errorFlash();
+    ESP.restart();
   }
 }
 
@@ -310,65 +327,70 @@ void wifiDelay() {
   delay(1000);
   off();
   delay(1000);
+  bluetooth();
   yellow();
   delay(1000);
   off();
   delay(1000);
+  bluetooth();
   yellow();
   delay(1000);
   off();
   delay(1000);
+  bluetooth();
   yellow();
   delay(1000);
   off();
   delay(1000);
+  bluetooth();
   yellow();
   delay(1000);
   off();
   delay(1000);
+  bluetooth();
 }
 
 void bluetooth() {
   if (digitalRead(BUTTON_PIN) == HIGH) {
 
-  bluetoothflash();
+    bluetoothflash();
 
-  // Initialize BLE server and characteristics
-  NimBLEDevice::init("ESP32 BLE Test");
-  NimBLEServer* pServer = NimBLEDevice::createServer();
-  pServer->setCallbacks(new MyServerCallbacks());
+    // Initialize BLE server and characteristics
+    NimBLEDevice::init("ESP32 BLE Test");
+    NimBLEServer* pServer = NimBLEDevice::createServer();
+    pServer->setCallbacks(new MyServerCallbacks());
 
-  NimBLEService* pService = pServer->createService(SERVICE_UUID);
+    NimBLEService* pService = pServer->createService(SERVICE_UUID);
 
-  // RX Characteristic (Write)
-  NimBLECharacteristic* pRXCharacteristic = pService->createCharacteristic(
-        CHARACTERISTIC_UUID_RX,
-        NIMBLE_PROPERTY::WRITE
-      );
-  pRXCharacteristic->setCallbacks(new MyCallbacks());
+    // RX Characteristic (Write)
+    NimBLECharacteristic* pRXCharacteristic = pService->createCharacteristic(
+          CHARACTERISTIC_UUID_RX,
+          NIMBLE_PROPERTY::WRITE
+        );
+    pRXCharacteristic->setCallbacks(new MyCallbacks());
 
-  // TX Characteristic (Notify)
-  pCharacteristic = pService->createCharacteristic(
-                      CHARACTERISTIC_UUID_TX,
-                      NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY
-                    );
-  pCharacteristic->addDescriptor(new NimBLE2904());
+    // TX Characteristic (Notify)
+    pCharacteristic = pService->createCharacteristic(
+                        CHARACTERISTIC_UUID_TX,
+                        NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY
+                      );
+    pCharacteristic->addDescriptor(new NimBLE2904());
 
-  pService->start();
-  pServer->getAdvertising()->start();
-  Serial.println("Waiting a client connection to notify...");
+    pService->start();
+    pServer->getAdvertising()->start();
+    Serial.println("Waiting a client connection to notify...");
 
-  waiting = true;
+    waiting = true;
 
-  while (waiting) {
-    if (temp != "") {
-      newCred = temp;
-      temp = "";
-      waiting = false;
+    while (waiting) {
+      if (temp != "") {
+        newCred = temp;
+        temp = "";
+        waiting = false;
+      }
     }
-  }
 
-  
+
     Serial.println("New Credentials Received!");
     Serial.println(newCred);
     EEPROM.writeString(0, newCred);
@@ -378,5 +400,5 @@ void bluetooth() {
     blue(); delay(150); off(); delay(100);
 
     ESP.restart();
-}
+  }
 }
