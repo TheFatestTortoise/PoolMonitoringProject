@@ -168,8 +168,7 @@ void setup() {
 
 void loop() {
 
-  // Check if the button is pressed to initiate BLE communication
-  bluetooth(); // stuck it in its own thing at the bottom
+  bluetooth();
 
   unsigned long currentMillis = millis();
   // Read temperature and send data to Thingspeak
@@ -187,32 +186,24 @@ void loop() {
       if (currentMillis - previousMillisUpload >= intervalUpload) {
         ThingSpeak.setField(1, tempF);
         previousMillisUpload = currentMillis;
-        delay(2500);
-        bluetooth();
-        delay(2500);
+        delay(2500); bluetooth(); delay(2500);
       }
 
       int response = ThingSpeak.writeFields(channelID_write, apiKey_write);
       if (response == 200) {
         Serial.println("Data sent to ThingSpeak successfully.");
         cyan();
-        delay(2500);
-        bluetooth();
-        delay(2500);
+        delay(2500); bluetooth(); delay(2500);
       }
       else if (currentMillis - previousMillisUpload < intervalUpload) {
         Serial.println("Waiting for next upload");
         yellow();
-        delay(2500);
-        bluetooth();
-        delay(2500);
+        delay(2500); bluetooth(); delay(2500);
       }
       else {
         Serial.println("Error sending data to ThingSpeak. HTTP error code: " + String(response));
         red();
-        delay(2500);
-        bluetooth();
-        delay(2500);
+        delay(2500); bluetooth(); delay(2500);
       }
     }
     else {
@@ -258,7 +249,7 @@ void loop() {
 //      EEPROM.commit();
 //
 //      cyan(); delay(150); red(); delay(100); cyan(); delay(150); red(); delay(100);
-//      cyan(); delay(150); red(); delay(100);
+//      cyan(); delay(150); red(); delay(100); cyan(); delay(150); red(); delay(100);
 //
 //      ESP.restart();
 //    }
@@ -272,121 +263,52 @@ void loop() {
 }
 
 void errorFlash() {
-  red();
-  delay(200);
-  off();
-  delay(100);
-  red();
-  delay(200);
-  off();
-  delay(100);
-  red();
-  delay(200);
-  off();
-  delay(100);
-  red();
-  delay(200);
-  off();
-  delay(1000);
+  red(); delay(200); off(); delay(100); red(); delay(200); off(); delay(100);
+  red(); delay(200); off(); delay(100); red(); delay(200); off(); delay(1000);
 }
 
 void rainbowWipe() {
 
-  red();
-  delay(150);
-  yellow();
-  delay(150);
-  green();
-  delay(150);
-  cyan();
-  delay(150);
-  blue();
-  delay(150);
-  purple();
-  delay(150);
-  off();
+  red(); delay(150); yellow(); delay(150); green(); delay(150); cyan(); delay(150);
+  blue(); delay(150); purple(); delay(150); off();
 }
 
 void red() {
-  digitalWrite(RED_LED, HIGH);
-  digitalWrite(GREEN_LED, LOW);
-  digitalWrite(BLUE_LED, LOW);
+  digitalWrite(RED_LED, HIGH); digitalWrite(GREEN_LED, LOW); digitalWrite(BLUE_LED, LOW);
 }
 void yellow() {
-  digitalWrite(RED_LED, HIGH);
-  digitalWrite(GREEN_LED, HIGH);
-  digitalWrite(BLUE_LED, LOW);
+  digitalWrite(RED_LED, HIGH); digitalWrite(GREEN_LED, HIGH); digitalWrite(BLUE_LED, LOW);
 }
 void green() {
-  digitalWrite(RED_LED, LOW);
-  digitalWrite(GREEN_LED, HIGH);
-  digitalWrite(BLUE_LED, LOW);
+  digitalWrite(RED_LED, LOW); digitalWrite(GREEN_LED, HIGH); digitalWrite(BLUE_LED, LOW);
 }
 void cyan() {
-  digitalWrite(RED_LED, LOW);
-  digitalWrite(GREEN_LED, HIGH);
-  digitalWrite(BLUE_LED, HIGH);
+  digitalWrite(RED_LED, LOW); digitalWrite(GREEN_LED, HIGH); digitalWrite(BLUE_LED, HIGH);
 }
 void blue() {
-  digitalWrite(RED_LED, LOW);
-  digitalWrite(GREEN_LED, LOW);
-  digitalWrite(BLUE_LED, HIGH);
+  digitalWrite(RED_LED, LOW); digitalWrite(GREEN_LED, LOW); digitalWrite(BLUE_LED, HIGH);
 }
 void purple() {
-  digitalWrite(RED_LED, HIGH);
-  digitalWrite(GREEN_LED, LOW);
-  digitalWrite(BLUE_LED, HIGH);
+  digitalWrite(RED_LED, HIGH); digitalWrite(GREEN_LED, LOW); digitalWrite(BLUE_LED, HIGH);
 }
 void off() {
-  digitalWrite(RED_LED, LOW);
-  digitalWrite(GREEN_LED, LOW);
-  digitalWrite(BLUE_LED, LOW);
+  digitalWrite(RED_LED, LOW); digitalWrite(GREEN_LED, LOW); digitalWrite(BLUE_LED, LOW);
 }
 void bluetoothflash() {
-  red();
-  delay(150);
-  blue();
-  delay(150);
-  red();
-  delay(150);
-  blue();
-  delay(150);
-  red();
-  delay(150);
-  blue();
-  delay(150);
-  purple();
+  red(); delay(150); blue(); delay(150); red(); delay(150); blue(); delay(150);
+  red(); delay(150); blue(); delay(150); purple();
 }
 void wifiDelay() {
   // 10s delay with indicator lighting
-  yellow();
-  delay(1000);
-  off();
-  delay(1000);
-  bluetooth();
-  yellow();
-  delay(1000);
-  off();
-  delay(1000);
-  bluetooth();
-  yellow();
-  delay(1000);
-  off();
-  delay(1000);
-  bluetooth();
-  yellow();
-  delay(1000);
-  off();
-  delay(1000);
-  bluetooth();
-  yellow();
-  delay(1000);
-  off();
-  delay(1000);
-  bluetooth();
+  yellow(); delay(1000); off(); delay(1000); bluetooth();
+  yellow(); delay(1000); off(); delay(1000); bluetooth();
+  yellow(); delay(1000); off(); delay(1000); bluetooth();
+  yellow(); delay(1000); off(); delay(1000); bluetooth();
+  yellow(); delay(1000); off(); delay(1000); bluetooth();
 }
 
 void bluetooth() {
+  // Check if the button is pressed to initiate BLE communication
   if (digitalRead(BUTTON_PIN) == HIGH) {
 
     bluetoothflash();
@@ -433,7 +355,7 @@ void bluetooth() {
     EEPROM.commit();
 
     blue(); delay(150); off(); delay(100); blue(); delay(150); off(); delay(100);
-    blue(); delay(150); off(); delay(100);
+    blue(); delay(150); off(); delay(100); blue(); delay(150); off(); delay(100);
 
     ESP.restart();
   }
