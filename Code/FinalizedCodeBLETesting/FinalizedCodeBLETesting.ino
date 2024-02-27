@@ -44,9 +44,9 @@ const char* server = "api.thingspeak.com";
 unsigned long channelID_write = atol(channelIDStr_write);
 
 //// Init Thingspeak variables to read password updates
-//const char* channelIDStr_read = "2277799";
+//const char* channelIDStr_read = "2422785";
 //unsigned long channelID_read = atol(channelIDStr_read);
-//const char* apiKey_read = "8L2M0OE8TLJUEAX5";
+//const char* apiKey_read = "FNLHVPIIGEY2XBX5";
 
 // Define a custom service and characteristic Universally Unique ID for BLE
 #define SERVICE_UUID         "6E400001-B5A3-F393-E0A9-E50E24DCCA9E"
@@ -70,6 +70,11 @@ String newCred;
 String temp;
 String strs[5];
 int StringCount = 0;
+String Thingstrs[5];
+int ThingStringCount = 0;
+String Thingtemp;
+String maybeNewCred;
+String confirm = confirm; // Confirmation Word, right now it's confirm.
 
 // Init misc vars
 float tempF;
@@ -214,20 +219,51 @@ void loop() {
       Serial.println("Temp read error (-196.60001)");
     }
 
-    // The way this section is written now completely overrides the bluetooth creds.
-    // Code for reading password updates from Thingspeak (commented out)
-    // newCred = ThingSpeak.readFloatField(channelID_read, 1, apiKey_read);
-    // if (newCred != creds){
-    //      Serial.println("New Credentials Received!");
-    //      Serial.println(newCred);
-    //      EEPROM.writeString(0, newCred);
-    //      EEPROM.commit();
-    //
-    //      cyan(); delay(150); off(); delay(100); cyan(); delay(150); off(); delay(100);
-    //      cyan(); delay(150); off(); delay(100);
-    //
-    //      ESP.restart();
-    // }
+
+//    //     Code for reading password updates from Thingspeak
+//    maybeNewCred = ThingSpeak.readFloatField(channelID_read, 1, apiKey_read); // potential newCred from thingspeak
+//    //     Split the string into substrings
+//    while (maybeNewCred.length() > 0)
+//    {
+//      int Thingindex = maybeNewCred.indexOf(',');
+//      if (Thingindex == -1) // No comma found
+//      {
+//        Thingstrs[ThingStringCount++] = maybeNewCred;
+//        break;
+//      }
+//      else
+//      {
+//        Thingstrs[StringCount++] = maybeNewCred.substring(0, Thingindex);
+//        maybeNewCred = maybeNewCred.substring(Thingindex + 1);
+//      }
+//    }
+//
+//    // Format for entering into thingspeak is "SSID,password,confirm"
+//    // This is so it is differentiated from bluetooth creds and will only change the EEPROM creds
+//    //  when specifically intended
+//    
+//    Serial.println("ThingSpeak Stuff");
+//    Serial.print("  Maybe SSID = ");
+//    Serial.println(Thingstrs[0]);
+//    Serial.print("  Maybe Password = ");
+//    Serial.println(Thingstrs[1]);
+//    Serial.print("  Confirmation Word = ");
+//    Serial.println(Thingstrs[2]);
+//
+//    if (Thingstrs[2] == "confirm") { // Asks if 3rd section of string is equal to confirmation word
+//      newCred = maybeNewCred;  // Sets credentials if confirmed
+//      Serial.println("New ThingSpeak Credentials Received!");
+//      Serial.println(newCred);
+//      EEPROM.writeString(0, newCred);
+//      EEPROM.commit();
+//
+//      cyan(); delay(150); red(); delay(100); cyan(); delay(150); red(); delay(100);
+//      cyan(); delay(150); red(); delay(100);
+//
+//      ESP.restart();
+//    }
+
+    
   }
   else {
     errorFlash();
