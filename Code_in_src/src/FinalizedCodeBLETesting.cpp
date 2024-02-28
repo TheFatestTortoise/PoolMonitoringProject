@@ -1,3 +1,5 @@
+#include <Arduino.h>
+
 // Things to do before final product
 // - Comment out most or all serial printing or leave for later bugfixing?
 // - EEPROM size needs to fit any possible ssid/password?
@@ -106,6 +108,112 @@ class MyCallbacks : public BLECharacteristicCallbacks {
     }
 };
 
+
+////////////////////////////////////////////////////////////////////////////////////////////
+// Custom Functions ////////////////////////////////////////////////////////////////////////
+// MUST DEFINE THINGS IN ORDER IN VSCode
+
+void red() {
+  digitalWrite(RED_LED, HIGH); digitalWrite(GREEN_LED, LOW); digitalWrite(BLUE_LED, LOW);
+}
+void yellow() {
+  digitalWrite(RED_LED, HIGH); digitalWrite(GREEN_LED, HIGH); digitalWrite(BLUE_LED, LOW);
+}
+void green() {
+  digitalWrite(RED_LED, LOW); digitalWrite(GREEN_LED, HIGH); digitalWrite(BLUE_LED, LOW);
+}
+void cyan() {
+  digitalWrite(RED_LED, LOW); digitalWrite(GREEN_LED, HIGH); digitalWrite(BLUE_LED, HIGH);
+}
+void blue() {
+  digitalWrite(RED_LED, LOW); digitalWrite(GREEN_LED, LOW); digitalWrite(BLUE_LED, HIGH);
+}
+void purple() {
+  digitalWrite(RED_LED, HIGH); digitalWrite(GREEN_LED, LOW); digitalWrite(BLUE_LED, HIGH);
+}
+void off() {
+  digitalWrite(RED_LED, LOW); digitalWrite(GREEN_LED, LOW); digitalWrite(BLUE_LED, LOW);
+}
+void rainbowWipe() {
+  red(); delay(150); yellow(); delay(150); green(); delay(150); cyan(); delay(150);
+  blue(); delay(150); purple(); delay(150); off();
+}
+void errorFlash() {
+  red(); delay(200); off(); delay(100); red(); delay(200); off(); delay(100);
+  red(); delay(200); off(); delay(100); red(); delay(200); off(); delay(1000);
+}
+void bluetoothflash() {
+  red(); delay(150); blue(); delay(150); red(); delay(150); blue(); delay(150);
+  red(); delay(150); blue(); delay(150); purple();
+}
+
+void bluetooth() {
+  // Check if the button is pressed to initiate BLE communication
+  if (digitalRead(BUTTON_PIN) == HIGH) {
+
+    bluetoothflash();
+
+    // Initialize BLE server and characteristics
+    NimBLEDevice::init("ESP32 BLE Test");
+    NimBLEServer* pServer = NimBLEDevice::createServer();
+    pServer->setCallbacks(new MyServerCallbacks());
+
+    NimBLEService* pService = pServer->createService(SERVICE_UUID);
+
+    // RX Characteristic (Write)
+    NimBLECharacteristic* pRXCharacteristic = pService->createCharacteristic(
+          CHARACTERISTIC_UUID_RX,
+          NIMBLE_PROPERTY::WRITE
+        );
+    pRXCharacteristic->setCallbacks(new MyCallbacks());
+
+    // TX Characteristic (Notify)
+    pCharacteristic = pService->createCharacteristic(
+                        CHARACTERISTIC_UUID_TX,
+                        NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY
+                      );
+    pCharacteristic->addDescriptor(new NimBLE2904());
+
+    pService->start();
+    pServer->getAdvertising()->start();
+    Serial.println("Waiting a client connection to notify...");
+
+    waiting = true;
+
+    while (waiting) {
+      if (temp != "") {
+        newCred = temp;
+        temp = "";
+        waiting = false;
+      }
+    }
+
+
+    Serial.println("New Credentials Received!");
+    Serial.println(newCred);
+    EEPROM.writeString(0, newCred);
+    EEPROM.commit();
+
+    blue(); delay(150); off(); delay(100); blue(); delay(150); off(); delay(100);
+    blue(); delay(150); off(); delay(100); blue(); delay(150); off(); delay(100);
+
+    ESP.restart();
+  }
+}
+
+void wifiDelay() {
+  // 10s delay with indicator lighting
+  yellow(); delay(1000); off(); delay(1000); bluetooth();
+  yellow(); delay(1000); off(); delay(1000); bluetooth();
+  yellow(); delay(1000); off(); delay(1000); bluetooth();
+  yellow(); delay(1000); off(); delay(1000); bluetooth();
+  yellow(); delay(1000); off(); delay(1000); bluetooth();
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////
+// Main Code ///////////////////////////////////////////////////////////////////////////////
+
 void setup() {
 
   pinMode(RED_LED, OUTPUT);
@@ -165,6 +273,8 @@ void setup() {
 
   ThingSpeak.begin(client);
 }
+
+
 
 void loop() {
 
@@ -258,105 +368,6 @@ void loop() {
   }
   else {
     errorFlash();
-    ESP.restart();
-  }
-}
-
-void errorFlash() {
-  red(); delay(200); off(); delay(100); red(); delay(200); off(); delay(100);
-  red(); delay(200); off(); delay(100); red(); delay(200); off(); delay(1000);
-}
-
-void rainbowWipe() {
-
-  red(); delay(150); yellow(); delay(150); green(); delay(150); cyan(); delay(150);
-  blue(); delay(150); purple(); delay(150); off();
-}
-
-void red() {
-  digitalWrite(RED_LED, HIGH); digitalWrite(GREEN_LED, LOW); digitalWrite(BLUE_LED, LOW);
-}
-void yellow() {
-  digitalWrite(RED_LED, HIGH); digitalWrite(GREEN_LED, HIGH); digitalWrite(BLUE_LED, LOW);
-}
-void green() {
-  digitalWrite(RED_LED, LOW); digitalWrite(GREEN_LED, HIGH); digitalWrite(BLUE_LED, LOW);
-}
-void cyan() {
-  digitalWrite(RED_LED, LOW); digitalWrite(GREEN_LED, HIGH); digitalWrite(BLUE_LED, HIGH);
-}
-void blue() {
-  digitalWrite(RED_LED, LOW); digitalWrite(GREEN_LED, LOW); digitalWrite(BLUE_LED, HIGH);
-}
-void purple() {
-  digitalWrite(RED_LED, HIGH); digitalWrite(GREEN_LED, LOW); digitalWrite(BLUE_LED, HIGH);
-}
-void off() {
-  digitalWrite(RED_LED, LOW); digitalWrite(GREEN_LED, LOW); digitalWrite(BLUE_LED, LOW);
-}
-void bluetoothflash() {
-  red(); delay(150); blue(); delay(150); red(); delay(150); blue(); delay(150);
-  red(); delay(150); blue(); delay(150); purple();
-}
-void wifiDelay() {
-  // 10s delay with indicator lighting
-  yellow(); delay(1000); off(); delay(1000); bluetooth();
-  yellow(); delay(1000); off(); delay(1000); bluetooth();
-  yellow(); delay(1000); off(); delay(1000); bluetooth();
-  yellow(); delay(1000); off(); delay(1000); bluetooth();
-  yellow(); delay(1000); off(); delay(1000); bluetooth();
-}
-
-void bluetooth() {
-  // Check if the button is pressed to initiate BLE communication
-  if (digitalRead(BUTTON_PIN) == HIGH) {
-
-    bluetoothflash();
-
-    // Initialize BLE server and characteristics
-    NimBLEDevice::init("ESP32 BLE Test");
-    NimBLEServer* pServer = NimBLEDevice::createServer();
-    pServer->setCallbacks(new MyServerCallbacks());
-
-    NimBLEService* pService = pServer->createService(SERVICE_UUID);
-
-    // RX Characteristic (Write)
-    NimBLECharacteristic* pRXCharacteristic = pService->createCharacteristic(
-          CHARACTERISTIC_UUID_RX,
-          NIMBLE_PROPERTY::WRITE
-        );
-    pRXCharacteristic->setCallbacks(new MyCallbacks());
-
-    // TX Characteristic (Notify)
-    pCharacteristic = pService->createCharacteristic(
-                        CHARACTERISTIC_UUID_TX,
-                        NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY
-                      );
-    pCharacteristic->addDescriptor(new NimBLE2904());
-
-    pService->start();
-    pServer->getAdvertising()->start();
-    Serial.println("Waiting a client connection to notify...");
-
-    waiting = true;
-
-    while (waiting) {
-      if (temp != "") {
-        newCred = temp;
-        temp = "";
-        waiting = false;
-      }
-    }
-
-
-    Serial.println("New Credentials Received!");
-    Serial.println(newCred);
-    EEPROM.writeString(0, newCred);
-    EEPROM.commit();
-
-    blue(); delay(150); off(); delay(100); blue(); delay(150); off(); delay(100);
-    blue(); delay(150); off(); delay(100); blue(); delay(150); off(); delay(100);
-
     ESP.restart();
   }
 }
