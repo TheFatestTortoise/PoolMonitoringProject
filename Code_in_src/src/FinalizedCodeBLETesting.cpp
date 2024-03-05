@@ -31,9 +31,9 @@ const char* apiKey_write = "YTO69PC9LIR852AU";
 #define EEPROM_SIZE 40
 #define BUTTON_PIN 13
 #define SENSOR_PIN 23
-#define RED_LED 32
-#define GREEN_LED 33
-#define BLUE_LED 14
+#define RED_LED 25
+#define GREEN_LED 26
+#define BLUE_LED 27
 // Init temp sensing modules
 OneWire oneWire(SENSOR_PIN);
 DallasTemperature DS18B20(&oneWire);
