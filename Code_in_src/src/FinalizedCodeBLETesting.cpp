@@ -1,3 +1,12 @@
+// For updating through wifi, my plan based on Masons idea is to have a second seperate EEPROM of size 40
+// EEPROM 1 is for reading to connect to wifi, and EEPROM 2 is just for holding
+// The steps in order would be as follows:
+//   Check EEPROM 1 and split into necessary strings
+//   Connect to wifi with those creds from EEPROM 1
+//   Check thingspeak string
+//   if (thingspeak string different from EEPROM 2) {write thingspeak string to EEPROM 2 and restart}
+// This order should ensure that bluetooth creds are never overwritten unless the thingspeak credentials have just been changed
+
 #include <Arduino.h>
 
 // Things to do before final product
